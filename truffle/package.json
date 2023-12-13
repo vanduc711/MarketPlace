@@ -1,0 +1,19 @@
+{
+  "name": "truffle-project",
+  "version": "0.1.0",
+  "description": "Truffle project with SimpleStorage contract",
+  "scripts": {
+    "test": "truffle test"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^3.4.0",
+    "@truffle/hdwallet-provider": "^2.1.15",
+    "chai": "^4.3.8",
+    "chai-as-promised": "^7.1.1",
+    "chai-bn": "^0.3.1",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "truffle-plugin-verify": "^0.6.7"
+  }
+}
