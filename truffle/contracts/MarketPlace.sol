@@ -50,13 +50,6 @@ contract Marketplace is Ownable, KycContract {
         _;
     }
 
-    // modifier productAvailable(uint256 _productId) {
-    //     require(
-    //         productStatus[_productId] == ProductStatus.Available,
-    //         "Product is not available for purchase"
-    //     );
-    //     _;
-    // }
 
     function addProduct(string memory _name, uint256 _price) external {
         products[productCounter] = Product(
@@ -65,9 +58,9 @@ contract Marketplace is Ownable, KycContract {
             _price,
             payable(msg.sender),
             address(0),
-            ProductStatus.Available
-            
+            ProductStatus.Available 
         );
+        size.push(productCounter);
         emit ProductAdded(productCounter, _name, _price, msg.sender);
         productCounter++;
     }
@@ -95,10 +88,6 @@ contract Marketplace is Ownable, KycContract {
             products[_productId].seller
         );
     }
-
-    // function getProductStatus(uint256 _productId) external view returns (ProductStatus) {
-    //     return productStatus[_productId];
-    // }
 
     function getProducts(uint256 _productId) public view returns(uint256 id,
         string memory name,

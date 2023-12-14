@@ -11,7 +11,7 @@ node_modules
 coverage
 
 # Env
-.env
+
 .env.local
 .env.development.local
 .env.test.local

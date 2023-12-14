@@ -4,6 +4,7 @@ import MyTokenSale from "./contracts/MyTokenSale.json";
 import KycContract from "./contracts/KycContract.json";
 import MyMarketplace from "./contracts/Marketplace.json";
 import getWeb3 from "./getWeb3";
+import './App.css';
 
 class App extends Component {
   state = {
@@ -51,8 +52,9 @@ class App extends Component {
       // Set web3, accounts, and contract to the state, and then proceed with an
       // example of interacting with the contract's methods.
       this.listenToTokenTransfer();
-      this.loadProducts();
-      this.setState({ loaded: true, tokenSaleAddress: this.MyTokenSale._address}, this.updateUserTokens)
+
+      this.setState({ loaded: true, tokenSaleAddress: this.MyTokenSale._address }, this.updateUserTokens,)
+      this.loadProducts()
     } catch (error) {
       // Catch any errors for any of the above operations.
       alert(`Failed to load web3, accounts, or contract. Check console for details.`);
@@ -61,26 +63,27 @@ class App extends Component {
   }
 
   loadProducts = async () => {
-    const productCount = await this.MyMarketplace.methods.getLengthProduct().call();
+    try {
+      const productCount = await this.MyMarketplace.methods.getLengthProduct().call();
+      console.log("Product Count:", productCount);
 
-    for (let i = 0; i <= productCount; i++) {
-      const product = await this.MyMarketplace.methods.getProducts(i).call();
-      console.log(product.price)
-      this.setState({products : [...this.state.products, product]})
+      for (let i = 0; i < productCount; i++) {
+        const product = await this.MyMarketplace.methods.getProducts(i).call();
+        console.log("Product at index", i, ":", product);
+        this.setState({ products: [...this.state.products, product] });
+      }
+    } catch (error) {
+      console.error("Error loading products:", error);
     }
-
-    console.log(this.state.products)
-    console.log(productCount)
+    console.log("Updated products array:", this.state.products);
   }
 
   handleCreateProduct = async () => {
     const { productName, productPrice } = this.state;
-
     if (!productPrice || isNaN(productPrice)) {
       console.error("Product price is not a valid number");
       return;
     }
-
     try {
       var isKycCompleted = await this.KycContract.methods.kycCompleted(this.accounts[0]).call();
       console.log("KYC Status:", isKycCompleted);
@@ -89,26 +92,24 @@ class App extends Component {
         console.error("KYC verification required");
         return;
       }
-
-      // Indicate that the product creation is in progress
-
-      // Log before calling the smart contract function
       console.log("Before adding product. Account:", this.accounts[0]);
 
       await this.MyMarketplace.methods.addProduct(productName, productPrice).send({
         from: this.accounts[0],
       });
 
-
-      // Reload the products list after creating a new product
-      this.loadProducts()
-
       // Provide user feedback
     } catch (error) {
       console.error("Error creating product:", error);
       // Handle error - you might want to display an error message to the user
-    } 
+    }
   };
+
+  loadBlockchainData = () => {
+    // Load user tokens and products
+    this.updateUserTokens();
+    this.loadProducts();
+  }
 
 
   handlePurchaseProduct = async (productId) => {
@@ -121,31 +122,38 @@ class App extends Component {
         return;
       }
 
+
+
       const product = this.state.products[productId];
 
       // Check if the user has enough tokens to make the purchase
       if (product.price > this.state.userTokens) {
-        console.error("Insufficient tokens");
+        alert("Insufficient tokens");
         return;
       }
 
       // Make the transaction to purchase the product
       const approvalResult = await this.MyToken.methods
-      .approve(this.MyMarketplace._address, product.price)
-      .send({ from: this.accounts[0] });
-  
+        .approve(this.MyMarketplace._address, product.price)
+        .send({ from: this.accounts[0] });
+
       console.log("Approval Result:", approvalResult);
       console.log("Price:", product.price);
       console.log("Acc:", this.accounts[0]);
       console.log(this.MyMarketplace._address)
+
+      if (this.accounts[0] === product.seller) {
+        alert("Owner is not buy");
+        return;
+      }
       // Purchase the product using the approved tokens
       await this.MyMarketplace.methods
         .purchaseProduct(product.id)
-        .send({ from: this.accounts[0]});
-        
+        .send({ from: this.accounts[0] });
+
       // Reload the user tokens and products list after purchasing the product
     } catch (error) {
-      console.error("Error purchasing product:", error);
+      alert("Error purchasing product:", error);
       // Handle error - you might want to display an error message to the user
     }
   };
@@ -179,7 +187,7 @@ class App extends Component {
       await this.KycContract.methods.setKycCompleted(kycAddress).send({ from: this.accounts[0] });
     } else {
 
-      console.error("KycContract address is not set.");
+      alert("KycContract address is not set.");
     }
 
     alert("Account " + kycAddress + " is now whitelisted");
@@ -190,47 +198,66 @@ class App extends Component {
 
     }
     return (
-
-      <div className="App" style={{ textAlign: "center", padding: "20px" }}>
-        <h1>Capuccino Token for StarDucks</h1>
-
-        <h2>Enable your account</h2>
-
-        Address to allow: <input type="text" name="kycAddress" value={this.state.kycAddress} onChange={this.handleInputChange} />
-        <button type="button" onClick={this.handleKycSubmit}>Add Address to Whitelist</button>
-
-        <h2>Buy Token</h2>
-        <p>If you want to buy token, send Wei to this address: {this.state.tokenSaleAddress}</p>
-        <p>You have: {this.state.userTokens} CAPPU TOKEN</p>
-        <button type="button" onClick={this.handleBuyToken}>Buy more tokens</button>
-
-        <div>
-          <h1>Marketplace</h1>
+      <div className='container'>
+        <h1 className='header'>Capuccino Token for StarDucks</h1>
+        <div className='card' style={{ textAlign: "center" }}>
+          <h2>Enable your account</h2>
+          Address to allow:{' '}
+          <input
+            type='text'
+            name='kycAddress'
+            value={this.state.kycAddress}
+            onChange={this.handleInputChange}
+          />
+          <button
+            className='btn'
+            type='button'
+            onClick={this.handleKycSubmit}
+            style={{ marginLeft: '10px', backgroundColor: "#4caf50" }}
+          >
+            Add Address to Whitelist
+          </button>
+          <h2>Buy Token</h2>
+          <p>
+            If you want to buy token, send Wei to this address:{' '}
+            {this.state.tokenSaleAddress}
+          </p>
+          <p>You have: {this.state.userTokens} CAPPU TOKEN</p>
+          <button className='btn' type='button' style={{ backgroundColor: "#4caf50" }} onClick={this.handleBuyToken}>
+            Buy more tokens
+          </button>
+        </div>
+        <div className='card' style={{ textAlign: "center" }}>
+          <h2>Marketplace</h2>
           <div>
-            <h2>Create Product</h2>
-            <div>
-              <label>Name:</label>
-              <input
-                type="text"
-                name="productName"
-                value={this.state.productName}
-                onChange={this.handleInputChange}
-              />
+            <h2 style={{ margin: '10px 0px' }}>Create Product</h2>
+            <div className='input' style={{ paddingLeft: "200px" }}>
+              <div>
+                <label>Name:</label>
+                <input
+                  type='text'
+                  name='productName'
+                  value={this.state.productName}
+                  onChange={this.handleInputChange}
+                />
+              </div>
+              <div style={{ marginLeft: '10px' }}>
+                <label>Price (SCT):</label>
+                <input
+                  type='text'
+                  name='productPrice'
+                  value={this.state.productPrice}
+                  onChange={this.handleInputChange}
+                />
+              </div>
             </div>
-            <div>
-              <label>Price (SCT):</label>
-              <input
-                type="text"
-                name="productPrice"
-                value={this.state.productPrice}
-                onChange={this.handleInputChange}
-              />
-            </div>
-            <button onClick={this.handleCreateProduct}>Create Product</button>
+            <button className='btn' style={{ backgroundColor: "#4caf50" }} onClick={this.handleCreateProduct}>
+              Create Product
+            </button>
           </div>
 
           <div>
-            <h2>Products List</h2>
+            <h2 style={{ margin: '15px 0px', marginTop: "20px" }}>Products List</h2>
             <table>
               <thead>
                 <tr>
@@ -252,7 +279,9 @@ class App extends Component {
                       {product.status == 1 ? (
                         <span>Đã mua</span>
                       ) : (
-                        <button onClick={() => this.handlePurchaseProduct(product.id)}>
+                        <button
+                          onClick={() => this.handlePurchaseProduct(product.id)}
+                        >
                           Mua
                         </button>
                       )}
