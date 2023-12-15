@@ -1,40 +1,55 @@
-// Import Mongoose
-const mongoose = require('mongoose');
+const express = require('express');
+const Product = require('./models/Product');
+const connectDB = require('./db');
+require('dotenv').config();
+const app = express();
+const port = process.env.PORT || 3000;
+const cors = require('cors');
+app.use(cors());
+// const router = require('./routes/products');
+connectDB();
+app.use(express.json());
 
-// Kết nối đến MongoDB
-mongoose.connect('mongodb+srv://minh53016:vanduc711@cluster0.safl6ev.mongodb.net/', { useNewUrlParser: true, useUnifiedTopology: true });
-
-// Định nghĩa Schema
-const purchasedProductSchema = new mongoose.Schema({
-  productId: Number,
-  productName: String,
-  price: Number,
-  buyer: String,
-  seller: String,
-  purchasedAt: { type: Date, default: Date.now }
+// router(app);
+app.get('/api/products', async (req, res) => {
+  try {
+    const products = await Product.find();
+    res.status(200).json(products);
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    res.status(500).send('Internal Server Error');
+  }
 });
 
-// Tạo model từ Schema
-const PurchasedProduct = mongoose.model('PurchasedProduct', purchasedProductSchema);
-
-// Thêm dữ liệu vào MongoDB
-const addPurchasedProductToMongoDB = async (productId, productName, price, buyer, seller) => {
-  const purchasedProduct = new PurchasedProduct({
-    productId,
-    productName,
-    price,
-    buyer,
-    seller
-  });
+// Route to create a new product
+app.post('/api/products', async (req, res) => {
+  const { name, price } = req.body;
 
   try {
-    await purchasedProduct.save();
-    console.log('Dữ liệu đã được thêm vào MongoDB.');
-  } catch (error) {
-    console.error('Lỗi khi thêm dữ liệu vào MongoDB:', error);
-  }
-};
+    // Validate request data
+    if (!name || !price || isNaN(price)) {
+      return res
+        .status(400)
+        .json({ error: 'Invalid data. Name and price are required.' });
+    }
 
-// Sử dụng hàm để thêm dữ liệu khi giao dịch mua thành công
-// Gọi hàm này khi cập nhật trạng thái mua trong smart contract
-addPurchasedProductToMongoDB(productId, productName, price, buyer, seller);
+    // Create a new product instance
+    const newProduct = new Product({
+      name,
+      price,
+    });
+
+    // Save the product to the database
+    const savedProduct = await newProduct.save();
+
+    // Respond with the created product
+    res.status(201).json(savedProduct);
+  } catch (error) {
+    console.error('Error creating product:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});

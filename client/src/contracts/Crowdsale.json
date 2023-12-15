@@ -7626,7 +7626,7 @@
   },
   "networks": {},
   "schemaVersion": "3.4.16",
-  "updatedAt": "2023-12-14T02:02:05.299Z",
+  "updatedAt": "2023-12-15T14:31:11.815Z",
   "devdoc": {
     "events": {
       "TokensPurchased(address,address,uint256,uint256)": {

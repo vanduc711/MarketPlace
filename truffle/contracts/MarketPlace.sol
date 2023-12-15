@@ -67,15 +67,15 @@ contract Marketplace is Ownable, KycContract {
 
     function purchaseProduct(uint256 _productId) external {
 
+        products[_productId].buyer = msg.sender;
         uint256 price = products[_productId].price;
         // Ensure that the buyer has enough allowance to purchase the product
         require(
             myToken.allowance(msg.sender, address(this)) >= price,
             "Insufficient allowance for the buyer"
         );
-
         // Transfer tokens from the buyer to the seller
-        myToken.transferFrom(msg.sender,products[_productId].seller, price);
+        myToken.transferFrom(products[_productId].buyer,products[_productId].seller, price);
         products[_productId].status = ProductStatus.Sold;
         
 
@@ -84,7 +84,7 @@ contract Marketplace is Ownable, KycContract {
             _productId,
             products[_productId].name,
             price,
-            msg.sender,
+            products[_productId].buyer,
             products[_productId].seller
         );
     }
